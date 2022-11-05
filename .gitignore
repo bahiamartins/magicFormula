@@ -55,9 +55,6 @@ docs/_build/
 # PyBuilder
 target/
 
-#Ipython Notebook
-.ipynb_checkpoints
-*.ipynb
 
 *.sqlite3
 *.env
