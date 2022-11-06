@@ -92,3 +92,6 @@ Pipfile.lock
 *.xlsx
 
 gitmessage.txt
+
+#Ipython Notebook
+.ipynb_checkpoints
