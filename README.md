@@ -4,6 +4,10 @@ Script criado seguindo as regras do Livro
 
 ### A Fórmula Mágica de Joel Greenblatt para Bater o Mercado de Ações
 
+
+Link do Livro [https://www.amazon.com.br/F%C3%B3rmula-M%C3%A1gica-Greenblatt-Bater-Mercado/dp/8557173601]
+
+
 ```bash
 # criando o ambiente virtual
 $ python3 -m venv .venv
