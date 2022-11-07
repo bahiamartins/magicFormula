@@ -136,6 +136,9 @@ def startProcess():
     df = pd.DataFrame(all_data)
     df = df.sort_values(by='MagicIndex', ascending=False, ignore_index=True)
 
+    if not os.path.exists("output"):
+        os.makedirs('output')
+        
     output = os.path.join(os.getcwd(), 'output/')
     fileName = f'magicFormula_{datetime.datetime.now().strftime("%d%m%Y-%H%M%S")}.xlsx'
     filePath = os.path.join(output, fileName)
