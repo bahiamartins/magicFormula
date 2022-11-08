@@ -147,12 +147,12 @@ def startProcess():
 
 def generateData(simbol):
 
-    simbol = f'{simbol}.SA'
+    simbol_ = f'{simbol}.SA'
     print('------')
     print('')
     print('')
     print('Stock ', simbol)
-    tkr = yf.Ticker(simbol).all_modules[simbol]
+    tkr = yf.Ticker(simbol_).all_modules[simbol_]
 
     #print(tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'])
     #print('')
@@ -168,6 +168,7 @@ def generateData(simbol):
         ebit3 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][2]['ebit']
 
         ebit = ebit1 + ebit2 + ebit3
+        print('ebit 3')
 
         balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
 
@@ -177,6 +178,7 @@ def generateData(simbol):
         ebit2 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][1]['ebit']
 
         ebit = ebit1 + ebit2
+        print('ebit 2')
 
         balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
 

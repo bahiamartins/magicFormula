@@ -95,3 +95,6 @@ gitmessage.txt
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+output/
