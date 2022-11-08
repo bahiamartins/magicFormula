@@ -80,7 +80,7 @@ simbolos = [
     'MRVE3',
     'MULT3',
     'PCAR3',
-    'PETR3',
+    #'PETR3',
     'PETR4',
     'PRIO3',
     'PETZ3',
@@ -143,7 +143,7 @@ def startProcess():
     fileName = f'magicFormula_{datetime.datetime.now().strftime("%d%m%Y-%H%M%S")}.xlsx'
     filePath = os.path.join(output, fileName)
     df.to_excel(filePath, index = False)
-
+    
 
 def generateData(simbol):
 
@@ -158,6 +158,18 @@ def generateData(simbol):
     #print('')
     #print(tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'])
 
+    try:
+        #pegar ebit atualizado
+        ebit = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][0]['ebit']
+
+        balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
+    except:
+        #pegar ebit anual
+        ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
+
+        balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
+
+    '''
     #somar ebit por quarter
     #3º quarter
     balanceDate = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]['endDate']
@@ -192,17 +204,21 @@ def generateData(simbol):
         ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
 
         balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
+    '''
 
     try:
         marketCap = tkr['summaryDetail']['marketCap']
     except:
-        marketCap = '---'
+        marketCap = 0
+        return None
 
     #ROIC
     # Retorno sobre Capital
     # ROIC = EBIT / EV
     # EV = capital de giro líquido + ativos fixos líquidos
 
+    
+    '''
     try:
         capitalGiro = tkr['financialData']['operatingCashflow']
     except:
@@ -216,13 +232,16 @@ def generateData(simbol):
                 return None
     ativoFixoLiquido = balance['netTangibleAssets']
     EV = capitalGiro + ativoFixoLiquido
+    '''
+
+    EV = balance['totalCurrentAssets'] + balance['propertyPlantEquipment']
     
     if not ebit > 1 or EV == 0:
         print('Ebit negativo')
         return None
 
     ROIC = ebit / EV
-    ROIC = round(ROIC, 2)
+    ROIC = round(ROIC*100, 2)
 
     if ROIC <= 0:
         print('Sem retorno de capital')
@@ -232,6 +251,12 @@ def generateData(simbol):
     #print(balance)
     #print('')
     #print(tkr['financialData'])
+
+    # Earning Yield
+    #Resultado de Rendimento
+    # EY = EBIT / Valor de Mercado da Empresa
+    #invCap = Valor de Mercado da Empresa = valor de mercado + débito líquido remunerado a juros
+    '''
     try:
         totalDebt = tkr['financialData']['totalDebt']
     except:
@@ -254,15 +279,15 @@ def generateData(simbol):
     except:
         retainedEarnings = 0
 
-    # Earning Yield
-    #Resultado de Rendimento
-    # EY = EBIT / Valor de Mercado da Empresa
-    #invCap = Valor de Mercado da Empresa = valor de mercado + débito líquido remunerado a juros
     invCap = totalDebt + totalStockholderEquity + goodWill + cash #+ retainedEarnings
+    '''
     
+    
+    invCap = marketCap + balance['totalCurrentLiabilities']
+
     if ebit > 1:
         EY = ebit / invCap
-        EY = round(EY, 2)
+        EY = round(EY*100, 2)
     else:
         print('Earning Yield negativo')
         return None
