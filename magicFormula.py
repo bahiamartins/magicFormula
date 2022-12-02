@@ -152,7 +152,37 @@ def generateData(simbol):
     print('')
     print('')
     print('Stock ', simbol)
-    tkr = yf.Ticker(simbol_).all_modules[simbol_]
+    
+    ticker = yf.Ticker(simbol_, 
+        asynchronous=True
+    )
+    tkr = ticker.all_modules[simbol_]
+    
+    # price momentum
+
+    # prMo = (CP - CPn) / CPn
+    # CP = Closing price in the current period
+    # CPn = Closing price N periods ago
+
+    # considerar n = 6 meses
+    
+    try:
+        today = datetime.date.today()
+        past = datetime.timedelta(days = 180)
+        n = today - past
+
+        if n.weekday() == 5:
+            n = n - datetime.timedelta(days = 1)
+        elif n.weekday() == 6:
+            n = n - datetime.timedelta(days = 2)
+
+        CPn = float(ticker.history(period='6m')['close'][0])
+        CP = float(tkr['financialData']['currentPrice'])
+
+        prMo = (CP - CPn) / CPn
+        
+    except:
+        prMo = None
 
     #print(tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'])
     #print('')
@@ -294,6 +324,11 @@ def generateData(simbol):
     
     # magic index
     MAGIC_IDX = round(EY + ROIC, 2)
+
+    #index com price momentum
+    magic_momentum_idx = None
+    if prMo:
+        magic_momentum_idx = round(MAGIC_IDX + prMo, 2)
     
     try:
         DY = round(tkr['summaryDetail']['dividendYield']*100, 2)
@@ -319,6 +354,8 @@ def generateData(simbol):
         'Empresa': tkr['quoteType']['longName'],
         'Setor': sector,
         'MagicIndex': MAGIC_IDX,
+        'MagicMomentumIndex': magic_momentum_idx,
+        'Price Momentum': prMo,
         'EarningYield': EY,
         'ROIC': ROIC,
         'DividendosPercentual': DY ,
