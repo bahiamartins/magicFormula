@@ -163,23 +163,20 @@ def generateData(simbol):
     # prMo = (CP - CPn) / CPn
     # CP = Closing price in the current period
     # CPn = Closing price N periods ago
-
     # considerar n = 6 meses
     
     try:
-        today = datetime.date.today()
-        past = datetime.timedelta(days = 180)
-        n = today - past
+        CPn = ticker.history(period='6mo')['close'][0]
+        #print('CPn ', CPn)
 
-        if n.weekday() == 5:
-            n = n - datetime.timedelta(days = 1)
-        elif n.weekday() == 6:
-            n = n - datetime.timedelta(days = 2)
+        CP = tkr['financialData']['currentPrice']
+        #print('CP ', CP)
 
-        CPn = float(ticker.history(period='6m')['close'][0])
-        CP = float(tkr['financialData']['currentPrice'])
+        pr = CP - CPn
+        #print('CP - CPn ', pr)
 
-        prMo = (CP - CPn) / CPn
+        prMo = pr / CPn
+        prMo = round(prMo*100, 2)
         
     except:
         prMo = None
@@ -199,43 +196,6 @@ def generateData(simbol):
 
         balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
 
-    '''
-    #somar ebit por quarter
-    #3º quarter
-    balanceDate = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]['endDate']
-    if '09-30' in balanceDate:
-        #somar ebit 3 quarters
-        ebit1 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][0]['ebit']
-        ebit2 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][1]['ebit']
-        ebit3 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][2]['ebit']
-
-        ebit = ebit1 + ebit2 + ebit3
-        print('ebit 3')
-
-        balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
-
-    elif '06-30' in balanceDate:
-        #somar ebit 2 quarters
-        ebit1 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][0]['ebit']
-        ebit2 = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][1]['ebit']
-
-        ebit = ebit1 + ebit2
-        print('ebit 2')
-
-        balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
-
-    elif '03-31' in balanceDate:
-        #pegar ebit atualizado
-        ebit = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][0]['ebit']
-
-        balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
-    else:
-        #pegar ebit anual
-        ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
-
-        balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
-    '''
-
     try:
         marketCap = tkr['summaryDetail']['marketCap']
     except:
@@ -246,23 +206,6 @@ def generateData(simbol):
     # Retorno sobre Capital
     # ROIC = EBIT / EV
     # EV = capital de giro líquido + ativos fixos líquidos
-
-    
-    '''
-    try:
-        capitalGiro = tkr['financialData']['operatingCashflow']
-    except:
-        try:
-            capitalGiro = tkr['financialData']['freeCashflow']
-        except:
-            try:
-                capitalGiro = balance['totalCurrentAssets']
-            except:
-                print('sem capital giro')
-                return None
-    ativoFixoLiquido = balance['netTangibleAssets']
-    EV = capitalGiro + ativoFixoLiquido
-    '''
 
     EV = balance['totalCurrentAssets'] + balance['propertyPlantEquipment']
     
@@ -286,32 +229,6 @@ def generateData(simbol):
     #Resultado de Rendimento
     # EY = EBIT / Valor de Mercado da Empresa
     #invCap = Valor de Mercado da Empresa = valor de mercado + débito líquido remunerado a juros
-    '''
-    try:
-        totalDebt = tkr['financialData']['totalDebt']
-    except:
-        totalDebt = balance['shortLongTermDebt'] + balance['longTermDebt']
-    
-    try:
-        totalStockholderEquity = balance['totalStockholderEquity']
-    except:
-        totalStockholderEquity = 0
-    try:
-        goodWill = balance['goodWill']
-    except:
-        goodWill = 0
-    try:
-        cash = balance['cash']
-    except:
-        cash = 0
-    try:
-        retainedEarnings = balance['retainedEarnings']
-    except:
-        retainedEarnings = 0
-
-    invCap = totalDebt + totalStockholderEquity + goodWill + cash #+ retainedEarnings
-    '''
-    
     
     invCap = marketCap + balance['totalCurrentLiabilities']
 
@@ -328,17 +245,19 @@ def generateData(simbol):
     #index com price momentum
     magic_momentum_idx = None
     if prMo:
-        magic_momentum_idx = round(MAGIC_IDX + prMo, 2)
+        magic_momentum_idx = MAGIC_IDX + prMo
     
+    #print('IDX ', magic_momentum_idx)
+
     try:
         DY = round(tkr['summaryDetail']['dividendYield']*100, 2)
     except:
         DY = 0
     
     #filtra só empresas que pagam dividendos maior que x%
-    if not DY > 3:
-        print('Dividendos baixos')
-        return None
+    #if not DY > 3:
+    #    print('Dividendos baixos')
+    #    return None
         
     recommendationTrend = tkr['recommendationTrend']['trend'][3]
     buy = recommendationTrend['strongBuy'] + recommendationTrend['buy']
@@ -360,6 +279,8 @@ def generateData(simbol):
         'ROIC': ROIC,
         'DividendosPercentual': DY ,
         'PrecoAcao': tkr['financialData']['currentPrice'],
+        'PrecoAcao6meses': CPn,
+        'DifPrecoAcao': pr,
         'RecomendacaoCompraYahoo': buy,
         'RecomendacaoVendaYahoo': sell,
         'MarketCap': marketCap,
