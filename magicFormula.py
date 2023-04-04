@@ -192,9 +192,11 @@ def generateData(simbol):
         balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
     except:
         #pegar ebit anual
-        ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
-
-        balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
+        try:
+            ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
+            balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
+        except:
+            return None
 
     try:
         marketCap = tkr['summaryDetail']['marketCap']
@@ -207,7 +209,10 @@ def generateData(simbol):
     # ROIC = EBIT / EV
     # EV = capital de giro líquido + ativos fixos líquidos
 
-    EV = balance['totalCurrentAssets'] + balance['propertyPlantEquipment']
+    try:
+        EV = balance['totalCurrentAssets'] + balance['propertyPlantEquipment']
+    except:
+        return None
     
     if not ebit > 1 or EV == 0:
         print('Ebit negativo')
