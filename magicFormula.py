@@ -20,7 +20,7 @@ simbolos = [
     'AURE3',
     'AZUL4',
     'B3SA3',
-    'BPAN4',
+    #'BPAN4',
     'BBSE3',
     'BRML3',
     'BBDC3',
@@ -156,8 +156,12 @@ def generateData(simbol):
     ticker = yf.Ticker(simbol_, 
         asynchronous=True
     )
-    tkr = ticker.all_modules[simbol_]
-    
+
+    try:
+        CP = float(ticker.financial_data[simbol_]['currentPrice'])
+    except:
+        return None
+
     # price momentum
 
     # prMo = (CP - CPn) / CPn
@@ -166,11 +170,7 @@ def generateData(simbol):
     # considerar n = 6 meses
     
     try:
-        CPn = ticker.history(period='6mo')['close'][0]
-        #print('CPn ', CPn)
-
-        CP = tkr['financialData']['currentPrice']
-        #print('CP ', CP)
+        CPn = float(ticker.history(period='6mo')['close'][0])
 
         pr = CP - CPn
         #print('CP - CPn ', pr)
@@ -181,28 +181,32 @@ def generateData(simbol):
     except:
         prMo = None
 
-    #print(tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'])
-    #print('')
-    #print(tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'])
 
     try:
         #pegar ebit atualizado
-        ebit = tkr['incomeStatementHistoryQuarterly']['incomeStatementHistory'][0]['ebit']
-
-        balance = tkr['balanceSheetHistoryQuarterly']['balanceSheetStatements'][0]
+        #iloc -1 pega ultma linha do pandas
+        ebit = ticker.income_statement(frequency='q').iloc[['-1']].loc[:,'EBIT']
+        balance = ticker.balance_sheet(frequency='q').iloc[['-1']]
     except:
         #pegar ebit anual
         try:
-            ebit = tkr['incomeStatementHistory']['incomeStatementHistory'][0]['ebit']
-            balance = tkr['balanceSheetHistory']['balanceSheetStatements'][0]
+            ebit = ticker.income_statement(frequency='a').iloc[['-1']].loc[:,'EBIT']
+            balance = ticker.balance_sheet(frequency='q').iloc[['-1']]
         except:
             return None
+    
+    ebit = float(ebit.iloc[0])
+    
+    print('EBIT ', ebit)
+    
 
     try:
-        marketCap = tkr['summaryDetail']['marketCap']
+        marketCap = int(ticker.price[simbol_]['marketCap'])
     except:
         marketCap = 0
-        return None
+        #return None
+
+    print('marketCap ', marketCap)
 
     #ROIC
     # Retorno sobre Capital
@@ -210,32 +214,40 @@ def generateData(simbol):
     # EV = capital de giro líquido + ativos fixos líquidos
 
     try:
-        EV = balance['totalCurrentAssets'] + balance['propertyPlantEquipment']
+        EV = balance.loc[:,'TotalAssets'] + balance.loc[:,'MachineryFurnitureEquipment']
+        EV = int(EV.iloc[0])
     except:
         return None
+
+    print('EV ', EV)
     
-    if not ebit > 1 or EV == 0:
+    if not ebit > 1 or EV is None:
         print('Ebit negativo')
         return None
 
     ROIC = ebit / EV
     ROIC = round(ROIC*100, 2)
 
+    print('ROIC ', ROIC)
+
     if ROIC <= 0:
         print('Sem retorno de capital')
         return None
     
-    #Valor de Mercado da Empresa
-    #print(balance)
-    #print('')
-    #print(tkr['financialData'])
-
     # Earning Yield
     #Resultado de Rendimento
     # EY = EBIT / Valor de Mercado da Empresa
     #invCap = Valor de Mercado da Empresa = valor de mercado + débito líquido remunerado a juros
+
+    try:
+        currentLiab = balance.loc[:,'CurrentLiabilities']
+        currentLiab = int(currentLiab.iloc[0])
+    except:
+        currentLiab = 0
     
-    invCap = marketCap + balance['totalCurrentLiabilities']
+    invCap = marketCap + currentLiab
+
+    print('invCap', invCap)
 
     if ebit > 1:
         EY = ebit / invCap
@@ -255,7 +267,7 @@ def generateData(simbol):
     #print('IDX ', magic_momentum_idx)
 
     try:
-        DY = round(tkr['summaryDetail']['dividendYield']*100, 2)
+        DY = round(ticker.summary_detail[simbol_]['dividendYield']*100, 2)
     except:
         DY = 0
     
@@ -264,18 +276,21 @@ def generateData(simbol):
     #    print('Dividendos baixos')
     #    return None
         
-    recommendationTrend = tkr['recommendationTrend']['trend'][3]
-    buy = recommendationTrend['strongBuy'] + recommendationTrend['buy']
-    sell = recommendationTrend['strongSell'] + recommendationTrend['sell']
+    recommendationTrend = ticker.financial_data[simbol_]
 
     try:
-        sector = tkr['summaryProfile']['sector']
+        sector = ticker.asset_profile[simbol_]['sector']
     except:
         sector = '---'
     
+    try:
+        name = ticker.price[simbol_]['longName']
+    except:
+        name = None
+    
     data = {
         'Ticker': simbol,
-        'Empresa': tkr['quoteType']['longName'],
+        'Empresa': name,
         'Setor': sector,
         'MagicIndex': MAGIC_IDX,
         'MagicMomentumIndex': magic_momentum_idx,
@@ -283,11 +298,10 @@ def generateData(simbol):
         'EarningYield': EY,
         'ROIC': ROIC,
         'DividendosPercentual': DY ,
-        'PrecoAcao': tkr['financialData']['currentPrice'],
+        'PrecoAcao': CP,
         'PrecoAcao6meses': round(CPn, 2),
         'DifPrecoAcao': round(pr, 2),
-        'RecomendacaoCompraYahoo': buy,
-        'RecomendacaoVendaYahoo': sell,
+        'RecomendacaoCompraVenda': recommendationTrend['recommendationKey'],
         'MarketCap': marketCap,
         'Ebit (Lajir)': ebit,
         'CapitalTangivelEmpresa': EV,
