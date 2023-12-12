@@ -22,6 +22,15 @@ O programa pode ser executado usando o seguinte comando
 $ python3 magicFormula.py
 ```
 
+OU
+
+```bash
+$ python3 fundamentus.py
+```
+
+A diferença é que o magicFormula usa a API do Yahoo e o outro faz scrap no site fundamentus
+A API do Yahoo costuma ficar fora do ar, então o site fundamentus pode ser uma alternativa
+
 Aí ele cria uma planilha excel na pasta output.
 
 ### Como funciona a fórmula

@@ -1,3 +1,4 @@
 yahooquery
 pandas
 openpyxl
+beautifulsoup4
