@@ -81,14 +81,14 @@ def generateData(simbol):
 
 
     try:
-        #pegar ebit atualizado
-        #iloc -1 pega ultma linha do pandas
-        ebit = ticker.income_statement(frequency='q').iloc[['-1']].loc[:,'EBIT']
-        balance = ticker.balance_sheet(frequency='q').iloc[['-1']]
-    except:
         #pegar ebit anual
+        ebit = ticker.income_statement(frequency='a').iloc[['-1']].loc[:,'EBIT']
+        balance = ticker.balance_sheet(frequency='a').iloc[['-1']]
+    except:       
         try:
-            ebit = ticker.income_statement(frequency='a').iloc[['-1']].loc[:,'EBIT']
+            #pegar ebit atualizado
+            #iloc -1 pega ultma linha do pandas
+            ebit = ticker.income_statement(frequency='q').iloc[['-1']].loc[:,'EBIT']
             balance = ticker.balance_sheet(frequency='q').iloc[['-1']]
         except:
             return None
@@ -112,8 +112,8 @@ def generateData(simbol):
     # EV = capital de giro líquido + ativos fixos líquidos
 
     try:
-        EV = balance.loc[:,'TotalAssets'] + balance.loc[:,'MachineryFurnitureEquipment']
-        EV = int(EV.iloc[0])
+        EV = balance.loc[:,'TotalAssets'].iloc[0] + balance.loc[:,'MachineryFurnitureEquipment'].iloc[0]
+        EV = int(EV)
     except:
         return None
 
