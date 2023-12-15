@@ -79,6 +79,7 @@ def generateData(simbol):
     except:
         CPn = None
         prMo = None
+        pr = None
 
 
     try:
