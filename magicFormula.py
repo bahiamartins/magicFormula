@@ -187,6 +187,9 @@ def generateData(simbol):
     except:
         name = None
     
+    if CPn:
+        CPn = round(CPn, 2)
+    
     data = {
         'Ticker': simbol,
         'Empresa': name,
@@ -198,7 +201,7 @@ def generateData(simbol):
         'ROIC': ROIC,
         'DividendosPercentual': DY ,
         'PrecoAcao': CP,
-        'PrecoAcao6meses': round(CPn, 2),
+        'PrecoAcao6meses': CPn,
         'DifPrecoAcao': round(pr, 2),
         'RecomendacaoCompraVenda': recommendationTrend['recommendationKey'],
         'MarketCap': marketCap,
