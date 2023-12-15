@@ -77,6 +77,7 @@ def generateData(simbol):
         prMo = round(prMo*100, 2)
         
     except:
+        CPn = None
         prMo = None
 
 
