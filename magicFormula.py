@@ -177,6 +177,10 @@ def generateData(simbol):
     #    return None
         
     recommendationTrend = ticker.financial_data[simbol_]
+    try:
+        recommendationKey = recommendationTrend['recommendationKey']
+    except:
+        recommendationKey = None
 
     try:
         sector = ticker.asset_profile[simbol_]['sector']
@@ -191,6 +195,9 @@ def generateData(simbol):
     if CPn:
         CPn = round(CPn, 2)
     
+    if pr:
+        pr = round(pr, 2)
+    
     data = {
         'Ticker': simbol,
         'Empresa': name,
@@ -203,8 +210,8 @@ def generateData(simbol):
         'DividendosPercentual': DY ,
         'PrecoAcao': CP,
         'PrecoAcao6meses': CPn,
-        'DifPrecoAcao': round(pr, 2),
-        'RecomendacaoCompraVenda': recommendationTrend['recommendationKey'],
+        'DifPrecoAcao': pr,
+        'RecomendacaoCompraVenda': recommendationKey,
         'MarketCap': marketCap,
         'Ebit (Lajir)': ebit,
         'CapitalTangivelEmpresa': EV,
