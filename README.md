@@ -60,11 +60,6 @@ Pronto!
 
 Agora você já tem uma lista potencial de empresas para comprar ações que estào, no momento de gerar o Magic Index, baratas em relação ao mercado.
 
-
-**Passo 4 - Bonus**
-
-Eu filtrei no código apenas empresas que pagam mais de 4% de dividendos.
-
 Bons Investimentos!!!
 
 

@@ -108,6 +108,17 @@ def generateData(simbol):
 
     print('marketCap ', marketCap)
 
+    capType = 'LARGECAP'
+    makCp = int(marketCap)
+    if makCp <= 50000000:
+        capType = 'NANOCAP'
+    if makCp <= 300000000:
+        capType = 'MICROCAP'
+    if makCp <= 2000000000:
+        capType = 'MIDCAP'
+    if makCp <= 10000000000:
+        capType = 'SMALLCAP'
+
     #ROIC
     # Retorno sobre Capital
     # ROIC = EBIT / EV
@@ -212,10 +223,11 @@ def generateData(simbol):
         'PrecoAcao6meses': CPn,
         'DifPrecoAcao': pr,
         'RecomendacaoCompraVenda': recommendationKey,
-        'MarketCap': marketCap,
         'Ebit (Lajir)': ebit,
         'CapitalTangivelEmpresa': EV,
-        'ValorMercadoEmpresa': invCap
+        'MarketCap': marketCap,
+        'ValorMercadoEmpresa': invCap,
+        'CapType': capType
     }
     
     return data
