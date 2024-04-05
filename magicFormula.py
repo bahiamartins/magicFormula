@@ -110,15 +110,15 @@ def generateData(simbol):
 
     capType = 'LARGECAP'
     makCp = int(marketCap)
-    if makCp <= 50000000:
-        capType = 'NANOCAP'
-    if makCp <= 300000000:
-        capType = 'MICROCAP'
-    if makCp <= 2000000000:
-        capType = 'MIDCAP'
     if makCp <= 10000000000:
         capType = 'SMALLCAP'
-
+    if makCp <= 2000000000:
+        capType = 'MIDCAP'
+    if makCp <= 300000000:
+        capType = 'MICROCAP'
+    if makCp <= 50000000:
+        capType = 'NANOCAP'
+    
     #ROIC
     # Retorno sobre Capital
     # ROIC = EBIT / EV
