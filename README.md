@@ -58,7 +58,21 @@ Sendo o Valor da Empresa = o valor de mercado + débito líquido
 Agora é só somar os resultados dos passos 1 e 2 e classificar por maior pontuação.
 Pronto!
 
-Agora você já tem uma lista potencial de empresas para comprar ações que estào, no momento de gerar o Magic Index, baratas em relação ao mercado.
+Agora você já tem uma lista potencial de empresas para comprar ações que estão, no momento de gerar o Magic Index, potencialmente baratas em relação ao mercado e que poderão se valorizar em um período de tempo aceitável.
+
+
+**Classes de Empresas**
+
+Para facilitar comparar empresas por porte, foi inserida a coluna CapType que permite filtrar empreas pelo valor de mercado de acordo com seus grupos:
+
+- Nanocaps – Até 50 milhões
+- Microcaps – Até 300 milhões
+- Small Caps – Até 2 bilhões
+- Mid Caps – Até 10 bilhões
+- Large Caps – Até 200 bilhões
+- Mega Caps – Mais de 200 bilhões
+
+Lembrando que no Brasil não há empresas no momento no perfil Mega Caps
 
 Bons Investimentos!!!
 

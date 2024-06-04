@@ -110,14 +110,17 @@ def generateData(simbol):
 
     capType = 'LARGECAP'
     makCp = int(marketCap)
-    if makCp <= 10000000000:
-        capType = 'SMALLCAP'
-    if makCp <= 2000000000:
-        capType = 'MIDCAP'
-    if makCp <= 300000000:
-        capType = 'MICROCAP'
-    if makCp <= 50000000:
+    if makCp <= 50000000: #50.000.000
         capType = 'NANOCAP'
+    if makCp > 50000000 and makCp <= 300000000: #300.000.000
+        capType = 'MICROCAP'
+    if makCp > 300000000 and makCp <= 2000000000: #2.000.000.000
+        capType = 'SMALLCAP'
+    if makCp > 2000000000 and makCp <= 10000000000: # 10.000.000.000
+        capType = 'MIDCAP'
+    if makCp > 10000000000: # 10.000.000.000
+        capType = 'LARGECAP'
+    
     
     #ROIC
     # Retorno sobre Capital
