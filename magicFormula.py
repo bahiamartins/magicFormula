@@ -228,8 +228,7 @@ def generateData(simbol):
         'RecomendacaoCompraVenda': recommendationKey,
         'Ebit (Lajir)': ebit,
         'CapitalTangivelEmpresa': EV,
-        'MarketCap': marketCap,
-        'ValorMercadoEmpresa': invCap,
+        'ValorMercadoEmpresa': marketCap,
         'CapType': capType
     }
     

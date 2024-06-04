@@ -456,7 +456,6 @@ simbolos = [
     'CNTO3',
     'TIET4',
     'TIET3',
-    'CORR4',
     'CEPE3',
     'CALI4',
     'SNSY6',
