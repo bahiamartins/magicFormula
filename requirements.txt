@@ -2,3 +2,4 @@ yahooquery
 pandas
 openpyxl
 beautifulsoup4
+curl_cffi
