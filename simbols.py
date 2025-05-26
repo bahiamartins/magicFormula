@@ -111,7 +111,6 @@ simbolos = [
     'CSNA3',
     'CSRN3',
     'CSUD3',
-    'CTKA3',
     'CTKA4',
     'CTNM4',
     'CTSA4',

@@ -4,6 +4,7 @@ import pandas as pd
 from concurrent.futures.thread import ThreadPoolExecutor as Executor
 import time
 import datetime
+from dateutil.parser import parse
 import os
 from curl_cffi import requests
 
@@ -124,24 +125,45 @@ def generateData(simbol):
         prMo = None
         pr = None
 
+    #check if companies have quarters data depending on the month
+    # 31-Março
+    # 30-Junho
+    # 30-Setembro
+    # 31-Dezembro
+
+    frequency = 'a'
+
+    keyStats = ticker.key_stats
 
     try:
-        #pegar ebit anual
-        ebit = ticker.income_statement(frequency='a').iloc[['-1']].loc[:,'EBIT']
-        balance = ticker.balance_sheet(frequency='a').iloc[['-1']]
-    except:       
-        try:
-            #pegar ebit atualizado
-            #iloc -1 pega ultma linha do pandas
-            ebit = ticker.income_statement(frequency='q').iloc[['-1']].loc[:,'EBIT']
-            balance = ticker.balance_sheet(frequency='q').iloc[['-1']]
-        except:
-            return None
+        recentQuarter = parse(keyStats[simbol_]['mostRecentQuarter']).date()
+    except:
+        recentQuarter = None
+
+    if recentQuarter and recentQuarter.month != 12:
+        frequency = 'q'
+
+    if recentQuarter and recentQuarter.month == 12:
+        if datetime.date.today().month == 1:
+            frequency = 'q'
     
-    ebit = float(ebit.iloc[0])
-    
+    print('frequency ', frequency)
+
+    try:
+        #iloc -1 pega ultma linha do pandas
+        ebit = ticker.income_statement(frequency=frequency).iloc[['-1']].loc[:,'EBIT']
+        ebit = int(ebit.iloc[0])
+    except:
+        ebit = 0
+
     print('EBIT ', ebit)
     
+    balance = ticker.balance_sheet(frequency=frequency).iloc[['-1']]
+
+    try:
+        marketCap = int(balance.loc[:,'TotalAssets'].iloc[0])
+    except:
+        marketCap = 0
 
     try:
         marketCap = int(ticker.price[simbol_]['marketCap'])
@@ -171,14 +193,23 @@ def generateData(simbol):
     # EV = capital de giro líquido + ativos fixos líquidos
 
     try:
-        EV = balance.loc[:,'TotalAssets'].iloc[0] + balance.loc[:,'MachineryFurnitureEquipment'].iloc[0]
-        EV = int(EV)
+        TotalAssets = balance.loc[:,'TotalAssets'].iloc[0]
+        TotalAssets = int(TotalAssets)
     except:
-        EV = None
+        TotalAssets = 0
+
+    try:
+        MachineryFurnitureEquipment = balance.loc[:,'MachineryFurnitureEquipment'].iloc[0]
+        MachineryFurnitureEquipment = int(MachineryFurnitureEquipment)
+    except:
+        MachineryFurnitureEquipment = 0
+    
+    EV = TotalAssets + MachineryFurnitureEquipment
+    EV = int(EV)
 
     print('EV ', EV)
     
-    if not ebit > 1 or EV is None:
+    if not ebit > 1 or EV is None or EV == 0:
         print('Ebit negativo')
         # Instead of returning None, we'll return the data for negative EBIT companies
         data = {
