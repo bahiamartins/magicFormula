@@ -208,7 +208,52 @@ def generateData(simbol):
     EV = int(EV)
 
     print('EV ', EV)
+
+    # stocks undervalued
+    # Capital de Giro Líquido
+    # CGL por acao = (CurrentAssets - TotalLiabilitiesNetMinorityInterest) / OrdinarySharesNumber
+    # CGL por Ação > Preço da Ação e a empresa tem:
+    # Baixa dívida (NetDebt),
+    # Fluxo de caixa positivo (CashFlow)
+
+    try:
+        currentAssets = balance.loc[:,'CurrentAssets'].iloc[0]
+        totalLiabilitiesNetMinorityInterest = balance.loc[:,'TotalLiabilitiesNetMinorityInterest'].iloc[0]
+        ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
+
+        cglPorAcao = (int(currentAssets) - int(totalLiabilitiesNetMinorityInterest)) / int(ordinarySharesNumber)
+        cglPorAcao = int(cglPorAcao)
+    except:
+        cglPorAcao = 0
+
+    # Valor Patrimonial por Ação
+    # VPA = StockholdersEquity / OrdinarySharesNumber
+    # Se o preço da ação está abaixo do VPA, pode indicar subvalorização.
     
+    try:
+        stockholdersEquity = balance.loc[:,'StockholdersEquity'].iloc[0]
+        ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
+
+        vpa = int(stockholdersEquity) / int(ordinarySharesNumber)
+        vpa = int(vpa)
+    except:
+        vpa = 0
+    
+    # Dívida Líquida = TotalDebt - CashAndCashEquivalents  
+    # Formula = (TotalDebt - CashAndCashEquivalents) / EBIT
+
+    try:
+        totalDebt = balance.loc[:,'TotalDebt'].iloc[0]
+        cashAndCashEquivalents = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
+
+        dl = (int(totalDebt) - int(cashAndCashEquivalents)) / ebit
+        dl = int(dl)
+    except:
+        dl = 0
+
+    print('Dívida Líquida ', dl)
+
+
     if not ebit > 1 or EV is None or EV == 0:
         print('Ebit negativo')
         # Instead of returning None, we'll return the data for negative EBIT companies
@@ -216,16 +261,20 @@ def generateData(simbol):
             'Ticker': simbol,
             'Empresa': name,
             'Setor': sector,
+            'CapType': capType,
             'Price Momentum': prMo,
             'DividendosPercentual': DY,
             'PrecoAcao': CP,
             'PrecoAcao6meses': CPn,
             'DifPrecoAcao': pr,
+            'Capital de Giro Liquido por Ação': cglPorAcao,
+            'Valor Patrimonial por Ação': vpa,
+            'Dívida Líquida': dl,
             'RecomendacaoCompraVenda': recommendationKey,
             'Ebit (Lajir)': ebit,
             'CapitalTangivelEmpresa': EV,
             'ValorMercadoEmpresa': marketCap,
-            'CapType': capType
+            
         }
         return data
 
@@ -280,6 +329,7 @@ def generateData(simbol):
         'Ticker': simbol,
         'Empresa': name,
         'Setor': sector,
+        'CapType': capType,
         'MagicIndex': MAGIC_IDX,
         'MagicMomentumIndex': magic_momentum_idx,
         'Price Momentum': prMo,
@@ -289,11 +339,13 @@ def generateData(simbol):
         'PrecoAcao': CP,
         'PrecoAcao6meses': CPn,
         'DifPrecoAcao': pr,
+        'Capital de Giro Liquido por Ação': cglPorAcao,
+        'Valor Patrimonial por Ação': vpa,
+        'Dívida Líquida': dl,
         'RecomendacaoCompraVenda': recommendationKey,
         'Ebit (Lajir)': ebit,
         'CapitalTangivelEmpresa': EV,
-        'ValorMercadoEmpresa': marketCap,
-        'CapType': capType
+        'ValorMercadoEmpresa': marketCap
     }
     
     return data
