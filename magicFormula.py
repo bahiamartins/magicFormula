@@ -219,7 +219,7 @@ def generateData(simbol):
     try:
         currentAssets = balance.loc[:,'CurrentAssets'].iloc[0]
         totalLiabilitiesNetMinorityInterest = balance.loc[:,'TotalLiabilitiesNetMinorityInterest'].iloc[0]
-        ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
+        ordinarySharesNumber = balance.loc[:,'OrdinarySharesNumber'].iloc[0]
 
         cglPorAcao = (int(currentAssets) - int(totalLiabilitiesNetMinorityInterest)) / int(ordinarySharesNumber)
         cglPorAcao = round(cglPorAcao, 2)
@@ -234,7 +234,7 @@ def generateData(simbol):
     
     try:
         stockholdersEquity = balance.loc[:,'StockholdersEquity'].iloc[0]
-        ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
+        ordinarySharesNumber = balance.loc[:,'OrdinarySharesNumber'].iloc[0]
 
         vpa = int(stockholdersEquity) / int(ordinarySharesNumber)
         vpa = round(vpa, 2)
