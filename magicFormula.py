@@ -222,9 +222,11 @@ def generateData(simbol):
         ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
 
         cglPorAcao = (int(currentAssets) - int(totalLiabilitiesNetMinorityInterest)) / int(ordinarySharesNumber)
-        cglPorAcao = int(cglPorAcao)
+        cglPorAcao = round(cglPorAcao, 2)
     except:
-        cglPorAcao = 0
+        cglPorAcao = None
+
+    print('Capital de Giro Liquido por Ação ', cglPorAcao)
 
     # Valor Patrimonial por Ação
     # VPA = StockholdersEquity / OrdinarySharesNumber
@@ -235,9 +237,11 @@ def generateData(simbol):
         ordinarySharesNumber = ticker.price[simbol_]['sharesOutstanding']
 
         vpa = int(stockholdersEquity) / int(ordinarySharesNumber)
-        vpa = int(vpa)
+        vpa = round(vpa, 2)
     except:
-        vpa = 0
+        vpa = None
+
+    print('Valor Patrimonial por Ação ', vpa)
     
     # Dívida Líquida = TotalDebt - CashAndCashEquivalents  
     # Formula = (TotalDebt - CashAndCashEquivalents) / EBIT
@@ -247,9 +251,9 @@ def generateData(simbol):
         cashAndCashEquivalents = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
 
         dl = (int(totalDebt) - int(cashAndCashEquivalents)) / ebit
-        dl = int(dl)
+        dl = round(dl, 2)
     except:
-        dl = 0
+        dl = None
 
     print('Dívida Líquida ', dl)
 
