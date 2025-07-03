@@ -149,32 +149,26 @@ def generateData(simbol):
     
     print('frequency ', frequency)
 
-    try:
-        #iloc -1 pega ultma linha do pandas
-        ebit = ticker.income_statement(frequency=frequency).iloc[['-1']].loc[:,'EBIT']
-        ebit = int(ebit.iloc[0])
-    except:
-        ebit = 0
+    ebit = calculate_ebit(ticker.income_statement(frequency=frequency))
 
     print('EBIT ', ebit)
     
     balance = ticker.balance_sheet(frequency=frequency).iloc[['-1']]
+    valuation = ticker.valuation_measures.iloc[['-1']]
 
     try:
-        marketCap = int(balance.loc[:,'TotalAssets'].iloc[0])
+        marketCap = int(valuation.loc[:, 'MarketCap'].iloc[0])
+    except:
+        pass
+    try:    
+        marketCap =  int(ticker.price[simbol_]['marketCap'])
     except:
         marketCap = 0
-
-    try:
-        marketCap = int(ticker.price[simbol_]['marketCap'])
-    except:
-        marketCap = 0
-        #return None
 
     print('marketCap ', marketCap)
 
     capType = 'LARGECAP'
-    makCp = int(marketCap)
+    makCp = marketCap
     if makCp <= 50000000: #50.000.000
         capType = 'NANOCAP'
     if makCp > 50000000 and makCp <= 300000000: #300.000.000
@@ -189,22 +183,28 @@ def generateData(simbol):
     
     #ROIC
     # Retorno sobre Capital
-    # ROIC = EBIT / EV
+    # ROIC = EBIT / EV sendo EV = (Patrimônio Líquido + Dívida Líquida)
     # EV = capital de giro líquido + ativos fixos líquidos
 
     try:
-        TotalAssets = balance.loc[:,'TotalAssets'].iloc[0]
-        TotalAssets = int(TotalAssets)
+        TotalEquity = balance.loc[:,'TotalEquityGrossMinorityInterest'].iloc[0]  # Patrimônio Líquido
     except:
-        TotalAssets = 0
+        TotalEquity = balance.loc[:,'StockholdersEquity'].iloc[0]
 
     try:
-        MachineryFurnitureEquipment = balance.loc[:,'MachineryFurnitureEquipment'].iloc[0]
-        MachineryFurnitureEquipment = int(MachineryFurnitureEquipment)
+        TotalDebt = balance.loc[:,'TotalDebt'].iloc[0]  # Dívida total
     except:
-        MachineryFurnitureEquipment = 0
+        # Se não tiver 'TotalDebt', calcule:
+        CurrentDebt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
+        LongTermDebt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
+        TotalDebt = CurrentDebt + LongTermDebt
+
+    try:
+        Cash = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
+    except:
+        Cash = balance.loc[:,'CashCashEquivalentsAndShortTermInvestments'].iloc[0]
     
-    EV = TotalAssets + MachineryFurnitureEquipment
+    EV = TotalEquity + (TotalDebt - Cash)
     EV = int(EV)
 
     print('EV ', EV)
@@ -217,11 +217,13 @@ def generateData(simbol):
     # Fluxo de caixa positivo (CashFlow)
 
     try:
-        currentAssets = balance.loc[:,'CurrentAssets'].iloc[0]
-        totalLiabilitiesNetMinorityInterest = balance.loc[:,'TotalLiabilitiesNetMinorityInterest'].iloc[0]
+        cash_flow = ticker.cash_flow(frequency=frequency).iloc[['-1']]
+        FreeCashFlow = cash_flow.loc[:,'FreeCashFlow'].iloc[0]
+        CurrentAssets = balance.loc[:,'CurrentAssets'].iloc[0]
         ordinarySharesNumber = balance.loc[:,'OrdinarySharesNumber'].iloc[0]
+        currentLiabilities = balance.loc[:,'CurrentLiabilities'].iloc[0]
 
-        cglPorAcao = (int(currentAssets) - int(totalLiabilitiesNetMinorityInterest)) / int(ordinarySharesNumber)
+        cglPorAcao = (int(FreeCashFlow) + int(CurrentAssets) - int(currentLiabilities)) / int(ordinarySharesNumber)
         cglPorAcao = round(cglPorAcao, 2)
     except:
         cglPorAcao = None
@@ -289,7 +291,6 @@ def generateData(simbol):
 
     if ROIC <= 0:
         print('Sem retorno de capital')
-        return None
     
     # Earning Yield
     #Resultado de Rendimento
@@ -307,11 +308,10 @@ def generateData(simbol):
     print('invCap', invCap)
 
     if ebit > 1:
-        EY = ebit / invCap
+        EY = calculate_ey(ebit, balance, CP)
         EY = round(EY*100, 2)
     else:
         print('Earning Yield negativo')
-        return None
     
     # magic index
     MAGIC_IDX = round(EY + ROIC, 2)
@@ -353,6 +353,61 @@ def generateData(simbol):
     }
     
     return data
+
+
+def calculate_ebit(income_statement):
+    try:
+        # Tenta usar o EBIT direto (se disponível)
+        return income_statement.loc[:,'EBIT'].iloc[0]
+    except:
+        pass
+        
+    try:
+        # Método 1 (NetIncome + Juros + Impostos)
+        net_income = income_statement.loc[:,'NetIncome'].iloc[0]
+        interest_expense = income_statement.loc[:,'InterestExpense'].iloc[0]
+        tax_provision = income_statement.loc[:,'TaxProvision'].iloc[0]
+        return net_income + interest_expense + tax_provision
+    except:
+        pass
+        
+    try:
+        # Método 2 (OperatingIncome + Itens Não Operacionais)
+        operating_income = income_statement.loc[:,'OperatingIncome'].iloc[0]
+        other_income = income_statement.loc[:,'OtherIncomeExpense'].iloc[0]
+        return operating_income + other_income
+    except:
+        pass
+        
+    try:
+        # Método 3 (EBITDA - Depreciação)
+        ebitda = income_statement.loc[:,'EBITDA'].iloc[0]
+        depreciation = income_statement.loc[:,'ReconciledDepreciation'].iloc[0]
+        return ebitda - depreciation
+    except:
+        return None
+
+#calcular earning yield
+def calculate_ey(ebit, balance, current_stock_price):
+    # 1. Calcular Market Cap
+    shares_outstanding = balance.loc[:,'OrdinarySharesNumber'].iloc[0]
+    market_cap = current_stock_price * shares_outstanding
+    
+    # 2. Calcular Total Debt
+    current_debt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
+    long_term_debt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
+    total_debt = current_debt + long_term_debt
+    
+    # 3. Obter Cash
+    cash = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
+    
+    # 4. Calcular Enterprise Value
+    ev = market_cap + total_debt - cash
+    
+    # 5. Calcular Earning Yield
+    ey = ebit / ev if ev != 0 else 0
+    
+    return ey
 
 
 if __name__ == '__main__':
