@@ -298,6 +298,7 @@ def generateData(simbol):
     if ebit > 1:
         EY = calculate_ey(ebit, balance, CP, valuation)
         EY = round(EY*100, 2)
+        print('EY ', EY)
     else:
         print('Earning Yield negativo')
     
@@ -391,13 +392,12 @@ def calculate_ey(ebit, balance, current_stock_price, valuation):
     #if EnterpriseValue
     try:
         ev = valuation.loc[:, 'EnterpriseValue'].iloc[0]
+        if not pd.isna(ev):
+            ey = ebit / ev
+            ey = round(ey*100, 2)
+            return ey
     except:
         pass
-
-    if ev:
-        ey = ebit / ev
-        ey = round(ey*100, 2)
-        return ey
 
 
     # 1. Calcular Market Cap
@@ -405,9 +405,9 @@ def calculate_ey(ebit, balance, current_stock_price, valuation):
     market_cap = current_stock_price * shares_outstanding
     
     # 2. Calcular Total Debt
-    current_debt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
-    long_term_debt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
-    total_debt = current_debt + long_term_debt
+    total_debt = calculate_total_debt(balance)
+    if not total_debt:
+        total_debt = calculate_total_debt_alt(balance)
     
     # 3. Obter Cash
     cash = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
