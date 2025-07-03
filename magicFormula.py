@@ -110,6 +110,8 @@ def generateData(simbol):
     # CP = Closing price in the current period
     # CPn = Closing price N periods ago
     # considerar n = 6 meses
+
+    prMo = calculate_price_momentum(ticker)
     
     try:
         CPn = float(ticker.history(period='6mo')['close'][0])
@@ -295,20 +297,9 @@ def generateData(simbol):
     # Earning Yield
     #Resultado de Rendimento
     # EY = EBIT / Valor de Mercado da Empresa
-    #invCap = Valor de Mercado da Empresa = valor de mercado + débito líquido remunerado a juros
-
-    try:
-        currentLiab = balance.loc[:,'CurrentLiabilities']
-        currentLiab = int(currentLiab.iloc[0])
-    except:
-        currentLiab = 0
-    
-    invCap = marketCap + currentLiab
-
-    print('invCap', invCap)
 
     if ebit > 1:
-        EY = calculate_ey(ebit, balance, CP)
+        EY = calculate_ey(ebit, balance, CP, valuation)
         EY = round(EY*100, 2)
     else:
         print('Earning Yield negativo')
@@ -317,9 +308,11 @@ def generateData(simbol):
     MAGIC_IDX = round(EY + ROIC, 2)
 
     #index com price momentum
-    magic_momentum_idx = None
-    if prMo:
-        magic_momentum_idx = MAGIC_IDX + prMo
+    if all([ROIC, EY, prMo]):
+        # Ponderação: 50% fundamentos, 50% momentum
+        magic_momentum_idx = (0.4 * ROIC + 0.4 * EY) + (0.2 * prMo/100)
+    else:
+        magic_momentum_idx = None
     
     #print('IDX ', magic_momentum_idx)
     
@@ -388,7 +381,20 @@ def calculate_ebit(income_statement):
         return None
 
 #calcular earning yield
-def calculate_ey(ebit, balance, current_stock_price):
+def calculate_ey(ebit, balance, current_stock_price, valuation):
+
+    #if EnterpriseValue
+    try:
+        ev = valuation.loc[:, 'EnterpriseValue'].iloc[0]
+    except:
+        pass
+
+    if ev:
+        ey = ebit / ev
+        ey = round(ey*100, 2)
+        return ey
+
+
     # 1. Calcular Market Cap
     shares_outstanding = balance.loc[:,'OrdinarySharesNumber'].iloc[0]
     market_cap = current_stock_price * shares_outstanding
@@ -408,6 +414,38 @@ def calculate_ey(ebit, balance, current_stock_price):
     ey = ebit / ev if ev != 0 else 0
     
     return ey
+
+
+def calculate_price_momentum(ticker, months=6):
+    # Interpretação do Price Momentum:
+    # Momentum	    Interpretação	              Sinal
+    # > +15%	    Forte tendência de alta	      📈 Bullish
+    # +5% a +15%	Tendência moderada de alta	  ↗️ Positivo
+    # -5% a +5%	    Lateralizado/Neutro	          ➡️ Neutro
+    # -5% a -15%	Tendência moderada de baixa   ↘️ Negativo
+    # < -15%	    Forte tendência de baixa	  📉 Bearish
+    
+    try:
+        # Obter dados históricos ordenados cronologicamente (mais antigo primeiro)
+        hist = ticker.history(period=f'{months}mo')
+        
+        # Verificar se há dados suficientes
+        if len(hist) < 2:
+            return None
+        
+        # Preço mais antigo (início do período)
+        oldest_price = hist['close'].iloc[0]
+        
+        # Preço mais recente (final do período)
+        latest_price = hist['close'].iloc[-1]
+        
+        # Cálculo do momentum
+        momentum = (latest_price - oldest_price) / oldest_price
+        return round(momentum * 100, 2)  # Retorna em percentual
+    
+    except Exception as e:
+        print(f"Erro no cálculo de momentum: {str(e)}")
+        return None
 
 
 if __name__ == '__main__':
