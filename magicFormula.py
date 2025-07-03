@@ -310,7 +310,7 @@ def generateData(simbol):
     #index com price momentum
     if all([ROIC, EY, prMo]):
         # Ponderação: 50% fundamentos, 50% momentum
-        magic_momentum_idx = (0.4 * ROIC + 0.4 * EY) + (0.2 * prMo/100)
+        magic_momentum_idx = (0.4 * ROIC + 0.4 * EY) + (0.2 * prMo)
     else:
         magic_momentum_idx = None
     
