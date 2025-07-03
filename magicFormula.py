@@ -151,7 +151,8 @@ def generateData(simbol):
     
     print('frequency ', frequency)
 
-    ebit = calculate_ebit(ticker.income_statement(frequency=frequency))
+    income_statement = ticker.income_statement(frequency=frequency).iloc[['-1']]
+    ebit = calculate_ebit(income_statement)
 
     print('EBIT ', ebit)
     
@@ -258,7 +259,7 @@ def generateData(simbol):
     print('Dívida Líquida ', dl)
 
 
-    if not ebit > 1 or EV is None or EV == 0:
+    if EV is None or ebit < 1:
         print('Ebit negativo')
         # Instead of returning None, we'll return the data for negative EBIT companies
         data = {
@@ -347,7 +348,9 @@ def generateData(simbol):
 def calculate_ebit(income_statement):
     try:
         # Tenta usar o EBIT direto (se disponível)
-        return income_statement.loc[:,'EBIT'].iloc[0]
+        ebit = income_statement.loc[:,'EBIT'].iloc[0]
+        if not pd.isna(ebit):
+            return ebit
     except:
         pass
         
@@ -356,7 +359,9 @@ def calculate_ebit(income_statement):
         net_income = income_statement.loc[:,'NetIncome'].iloc[0]
         interest_expense = income_statement.loc[:,'InterestExpense'].iloc[0]
         tax_provision = income_statement.loc[:,'TaxProvision'].iloc[0]
-        return net_income + interest_expense + tax_provision
+        ebit = net_income + interest_expense + tax_provision
+        if not pd.isna(ebit):
+            return ebit
     except:
         pass
         
@@ -364,7 +369,9 @@ def calculate_ebit(income_statement):
         # Método 2 (OperatingIncome + Itens Não Operacionais)
         operating_income = income_statement.loc[:,'OperatingIncome'].iloc[0]
         other_income = income_statement.loc[:,'OtherIncomeExpense'].iloc[0]
-        return operating_income + other_income
+        ebit = operating_income + other_income
+        if not pd.isna(ebit):
+            return ebit
     except:
         pass
         
@@ -372,7 +379,9 @@ def calculate_ebit(income_statement):
         # Método 3 (EBITDA - Depreciação)
         ebitda = income_statement.loc[:,'EBITDA'].iloc[0]
         depreciation = income_statement.loc[:,'ReconciledDepreciation'].iloc[0]
-        return ebitda - depreciation
+        ebit = ebitda - depreciation
+        if not pd.isna(ebit):
+            return ebit
     except:
         return None
 
