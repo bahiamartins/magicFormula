@@ -193,13 +193,9 @@ def generateData(simbol):
     except:
         TotalEquity = balance.loc[:,'StockholdersEquity'].iloc[0]
 
-    try:
-        TotalDebt = balance.loc[:,'TotalDebt'].iloc[0]  # Dívida total
-    except:
-        # Se não tiver 'TotalDebt', calcule:
-        CurrentDebt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
-        LongTermDebt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
-        TotalDebt = CurrentDebt + LongTermDebt
+    TotalDebt = calculate_total_debt(balance)
+    if not TotalDebt:
+        TotalDebt = calculate_total_debt_alt(balance)
 
     try:
         Cash = balance.loc[:,'CashAndCashEquivalents'].iloc[0]
@@ -446,6 +442,60 @@ def calculate_price_momentum(ticker, months=6):
     except Exception as e:
         print(f"Erro no cálculo de momentum: {str(e)}")
         return None
+
+
+def calculate_total_debt(balance):
+
+    try:
+        TotalDebt = balance.loc[:,'TotalDebt'].iloc[0]  # Dívida total
+        if not pd.isna(TotalDebt):
+            return TotalDebt
+    except:
+        pass
+    
+    try:
+        # Se não tiver 'TotalDebt', calcule:
+        CurrentDebt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
+        LongTermDebt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
+        TotalDebt = CurrentDebt + LongTermDebt
+        if not pd.isna(TotalDebt):
+            return TotalDebt
+    except:
+        pass
+    
+    try:
+        # Extração dos campos necessários
+        total_assets = balance.loc[:,'TotalAssets'].iloc[0]
+        net_tangible_assets = balance.loc[:,'NetTangibleAssets'].iloc[0]
+        long_term_provisions = balance.loc[:,'LongTermProvisions'].iloc[0]
+        
+        # Cálculo da dívida total
+        total_debt = (total_assets - net_tangible_assets) + long_term_provisions
+        if not pd.isna(total_debt):
+            return max(total_debt, 0)  # Garante valor não-negativo
+        
+    except KeyError as e:
+        print(f"Campo não encontrado: {str(e)}")
+        return None
+    except Exception as e:
+        print(f"Erro no cálculo: {str(e)}")
+        return None
+
+
+def calculate_total_debt_alt(balance):
+    try:
+        total_assets = balance.loc[:,'TotalAssets'].iloc[0]
+        goodwill_intangibles = balance.loc[:,'GoodwillAndOtherIntangibleAssets'].iloc[0]
+        equity = balance.loc[:,'CommonStockEquity'].iloc[0]
+        long_term_provisions = balance.loc[:,'LongTermProvisions'].iloc[0]
+        
+        # Fórmula alternativa
+        total_debt = total_assets - goodwill_intangibles - equity + long_term_provisions
+        return max(total_debt, 0)
+        
+    except KeyError:
+        # Fallback simplificado
+        return balance['LongTermProvisions'].iloc[0] * 2  # Estimativa conservadora
 
 
 if __name__ == '__main__':
