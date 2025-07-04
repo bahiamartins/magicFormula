@@ -151,8 +151,12 @@ def generateData(simbol):
     
     print('frequency ', frequency)
 
-    income_statement = ticker.income_statement(frequency=frequency).iloc[['-1']]
-    ebit = calculate_ebit(income_statement)
+    try:
+        income_statement = ticker.income_statement(frequency=frequency).iloc[['-1']]
+        ebit = calculate_ebit(income_statement)
+    except:
+        print('Erro ao calcular EBIT')
+        return None
 
     print('EBIT ', ebit)
     
@@ -259,7 +263,7 @@ def generateData(simbol):
     print('Dívida Líquida ', dl)
 
 
-    if EV is None or ebit < 1:
+    if ebit is None or ebit < 1:
         print('Ebit negativo')
         # Instead of returning None, we'll return the data for negative EBIT companies
         data = {
