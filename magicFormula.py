@@ -31,12 +31,13 @@ def startProcess():
 
         with Executor() as executor:
             r = executor.submit(generateData, ticker)
-            #print(r.result())
-            if r.result():
-                if r.result().get('Ebit (Lajir)', 0) < 0:
-                    negative_ebit_data.append(r.result())
+            result = r.result()
+            #print(result)
+            if result:
+                if result.get('Ebit (Lajir)', 0) < 0:
+                    negative_ebit_data.append(result)
                 else:
-                    all_data.append(r.result())
+                    all_data.append(result)
 
     df = pd.DataFrame(all_data)
     df = df.sort_values(by='MagicIndex', ascending=False, ignore_index=True)
@@ -461,89 +462,37 @@ def calculate_total_debt(balance):
 
     try:
         TotalDebt = balance.loc[:,'TotalDebt'].iloc[0]  # Dívida total
-        print(f"TotalDebt 1: {str(TotalDebt)}")
         if pd.notna(TotalDebt):
             return TotalDebt
-        print('no totaldebt')
     except:
         pass
 
     try:
         # Se não tiver 'TotalDebt', calcule:
         CurrentDebt = balance.loc[:,'CurrentDebtAndCapitalLeaseObligation'].iloc[0]
-        print(f"CurrentDebt: {str(CurrentDebt)}")
-        if pd.notna(CurrentDebt):
-            return CurrentDebt
-        print('no currentdebt')
-    except:
-        CurrentDebt = None
-    
-    if CurrentDebt:
-
-        try:
-          LongTermDebt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
-          print(f"LongTermDebt: {str(LongTermDebt)}")
-          if pd.notna(LongTermDebt):
-            return LongTermDebt
-          print('no longtermdebt')
-        except:
-          LongTermDebt = 0
-
-        if CurrentDebt is not None:
+        LongTermDebt = balance.loc[:,'LongTermDebtAndCapitalLeaseObligation'].iloc[0]
+        
+        if pd.notna(CurrentDebt) and pd.notna(LongTermDebt):
             TotalDebt = CurrentDebt + LongTermDebt
-            print(f"TotalDebt 2: {str(TotalDebt)}")
-            if pd.notna(TotalDebt):
-                return TotalDebt
+            return TotalDebt
+        elif pd.notna(CurrentDebt):
+            return CurrentDebt
+        elif pd.notna(LongTermDebt):
+            return LongTermDebt
+    except:
+        pass
     
     try:
         # Extração dos campos necessários
         total_assets = balance.loc[:,'TotalAssets'].iloc[0]
-        if pd.notna(total_assets):
-            return total_assets
-        print('no totalassets')
-
-    except:
-        total_assets = None
-    
-    if total_assets:
-
-        try:
-            net_tangible_assets = balance.loc[:,'NetTangibleAssets'].iloc[0]
-            if pd.notna(net_tangible_assets):
-                return net_tangible_assets
-            print('no nettangibleassets')
-        except:
-            net_tangible_assets = None
+        net_tangible_assets = balance.loc[:,'NetTangibleAssets'].iloc[0]
+        long_term_provisions = balance.loc[:,'LongTermProvisions'].iloc[0]
         
-        try:
-          long_term_provisions = balance.loc[:,'LongTermProvisions'].iloc[0]
-          if pd.notna(long_term_provisions):
-            return long_term_provisions
-          print('no longtermprovisions')
-        except:
-          long_term_provisions = 0
-
         # Cálculo da dívida total
-        total_debt = (total_assets - net_tangible_assets) + long_term_provisions
-        if pd.notna(total_debt):
-          print(f"total_debt: {str(total_debt)}")
-          return max(total_debt, 0)  # Garante valor não-negativo
-    try:
-        # 1. Dívida de Curto Prazo (Current Debt)
-        current_debt = balance['CurrentCapitalLeaseObligation'].iloc[0]
+        if pd.notna(total_assets) and pd.notna(net_tangible_assets) and pd.notna(long_term_provisions):
+            total_debt = (total_assets - net_tangible_assets) + long_term_provisions
+            return max(total_debt, 0)  # Garante valor não-negativo
         
-        # 2. Dívida de Longo Prazo (Long-Term Debt)
-        # Calculada como o total de arrendamentos menos a parcela corrente
-        lease_obligations = balance['CapitalLeaseObligations'].iloc[0]
-        current_lease = balance['CurrentCapitalLeaseObligation'].iloc[0]
-        long_term_debt = lease_obligations - current_lease
-        
-        # 3. Total Debt
-        if pd.notna(current_debt) and pd.notna(lease_obligations) and pd.notna(current_lease):
-            total_debt = current_debt + long_term_debt
-            print(f"TotalDebt 3: {str(total_debt)}")
-            return total_debt
-    
     except KeyError as e:
         print(f"Campo não encontrado: {str(e)}")
     except Exception as e:
