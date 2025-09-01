@@ -270,6 +270,15 @@ def generateData(simbol):
 
     print('Dívida Líquida ', dl)
 
+    # se capital de giro liquido > preco acao, compra!
+    CGLPrecoAcao = '-'
+    if cglPorAcao > CP:
+        CGLPrecoAcao = cglPorAcao / CP
+
+    # se preco acao < valor patrimonial por acao, subvalorizada!
+    VPAPrecoAcao = '-'
+    if CP < vpa:
+        VPAPrecoAcao = 'subvalorizada'
 
     if ebit is None or ebit < 1:
         print('Ebit negativo')
@@ -285,7 +294,9 @@ def generateData(simbol):
             'PrecoAcao6meses': CPn,
             'DifPrecoAcao': pr,
             'Capital de Giro Liquido por Ação': cglPorAcao,
+            'CGL/PrecoAcao': CGLPrecoAcao,
             'Valor Patrimonial por Ação': vpa,
+            'PrecoAcao / VPA': VPAPrecoAcao,
             'Dívida Líquida': dl,
             'RecomendacaoCompraVenda': recommendationKey,
             'Ebit (Lajir)': ebit,
@@ -347,7 +358,9 @@ def generateData(simbol):
         'PrecoAcao6meses': CPn,
         'DifPrecoAcao': pr,
         'Capital de Giro Liquido por Ação': cglPorAcao,
+        'CGL/PrecoAcao': CGLPrecoAcao,
         'Valor Patrimonial por Ação': vpa,
+        'PrecoAcao / VPA': VPAPrecoAcao,
         'Dívida Líquida': dl,
         'RecomendacaoCompraVenda': recommendationKey,
         'Ebit (Lajir)': ebit,
