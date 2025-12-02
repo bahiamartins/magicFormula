@@ -149,7 +149,7 @@ simbolos = [
     'EGIE3',
     'EKTR4',
     'ELEK4',
-    'ELET3',
+    'AXIA3',
     'ELMD3',
     'ELPL3',
     'EMAE4',
