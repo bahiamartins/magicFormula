@@ -8,16 +8,34 @@ Script criado seguindo as regras do Livro
 Link do Livro [https://www.amazon.com.br/F%C3%B3rmula-M%C3%A1gica-Greenblatt-Bater-Mercado/dp/8557173601]
 
 
+### Rodando o script
+
+**windows**
+
+```bash
+# criando o ambiente virtual
+$ py -m venv .venv       
+# Iniciando o ambiente virtual
+$ .venv/Scripts/activate.ps1
+# Instalando as dependencias
+$ pip install --upgrade pip
+$ pip install -r requirements.txt
+```
+
+**unix**
+
 ```bash
 # criando o ambiente virtual
 $ python3 -m venv .venv
 # Iniciando o ambiente virtual
 $ source .venv/bin/activate
 # Instalando as dependencias
+$ pip install --upgrade pip
 $ pip install -r requirements.txt
 ```
 
-O programa pode ser executado usando o seguinte comando
+**O programa pode ser executado usando o seguinte comando**
+
 ```bash
 $ python3 magicFormula.py
 ```
