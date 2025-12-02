@@ -166,7 +166,46 @@ def generateData(simbol):
     print('EBIT ', ebit)
     
     balance = ticker.balance_sheet(frequency=frequency).iloc[['-1']]
-    valuation = ticker.valuation_measures.iloc[['-1']]
+
+    # `ticker.valuation_measures` can be a DataFrame, a dict, or sometimes
+    # a string (returned by some yahooquery responses). Coerce safely to a
+    # DataFrame row so later `valuation.loc[:, 'MarketCap'].iloc[0]` works
+    # (or falls through to the existing try/except handling).
+    valuation = None
+    try:
+        vm = ticker.valuation_measures
+        # If it behaves like a pandas object with .iloc, use it directly
+        if hasattr(vm, 'iloc'):
+            try:
+                valuation = vm.iloc[[-1]]
+            except Exception:
+                # fallback: try to convert to DataFrame
+                valuation = pd.DataFrame(vm)
+                if not valuation.empty:
+                    valuation = valuation.iloc[[-1]]
+        else:
+            # If it's dict-like, try to create a DataFrame
+            if isinstance(vm, dict):
+                # sometimes vm is {symbol: {col: value, ...}} or {col: [values]}
+                if simbol_ in vm and isinstance(vm[simbol_], dict):
+                    valuation = pd.DataFrame([vm[simbol_]])
+                else:
+                    try:
+                        valuation = pd.DataFrame(vm)
+                        if not valuation.empty:
+                            valuation = valuation.iloc[[-1]]
+                    except Exception:
+                        # Last resort: wrap the object into a single-row DF
+                        valuation = pd.DataFrame([vm])
+            else:
+                # Not dict-like; wrap into single-row DataFrame
+                valuation = pd.DataFrame([vm])
+
+        # Ensure valuation is a DataFrame object (may still be empty)
+        if valuation is None:
+            valuation = pd.DataFrame()
+    except Exception:
+        valuation = pd.DataFrame()
 
     try:
         marketCap = int(valuation.loc[:, 'MarketCap'].iloc[0])
@@ -272,13 +311,21 @@ def generateData(simbol):
 
     # se capital de giro liquido > preco acao, compra!
     CGLPrecoAcao = '-'
-    if cglPorAcao > CP:
-        CGLPrecoAcao = cglPorAcao / CP
+    if cglPorAcao is not None and CP is not None:
+        try:
+            if cglPorAcao > CP:
+                CGLPrecoAcao = cglPorAcao / CP
+        except Exception:
+            CGLPrecoAcao = '-'
 
     # se preco acao < valor patrimonial por acao, subvalorizada!
     VPAPrecoAcao = '-'
-    if CP < vpa:
-        VPAPrecoAcao = 'subvalorizada'
+    if vpa is not None and CP is not None:
+        try:
+            if CP < vpa:
+                VPAPrecoAcao = 'subvalorizada'
+        except Exception:
+            VPAPrecoAcao = '-'
 
     if ebit is None or ebit < 1:
         print('Ebit negativo')
