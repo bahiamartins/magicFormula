@@ -20,6 +20,31 @@ def main():
     print(f'Rodou em :{t2 - t1} segundos')
 
 
+def save_spreadsheet(all_data, negative_ebit_data, suffix=''):
+    """Build DataFrames and save to Excel. Used for final save and for partial save on error."""
+    df = pd.DataFrame(all_data)
+    if not df.empty:
+        df = df.sort_values(by='MagicIndex', ascending=False, ignore_index=True)
+
+    df_negative_ebit = pd.DataFrame(negative_ebit_data)
+    if not df_negative_ebit.empty:
+        df_negative_ebit = df_negative_ebit.sort_values(by='Ebit (Lajir)', ascending=True, ignore_index=True)
+
+    if not os.path.exists("output"):
+        os.makedirs('output')
+
+    output = os.path.join(os.getcwd(), 'output/')
+    fileName = f'magicFormula_{datetime.datetime.now().strftime("%d%m%Y-%H%M%S")}{suffix}.xlsx'
+    filePath = os.path.join(output, fileName)
+
+    with pd.ExcelWriter(filePath, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Empresas Positivas', index=False)
+        if not df_negative_ebit.empty:
+            df_negative_ebit.to_excel(writer, sheet_name='Empresas EBIT Negativo', index=False)
+
+    return filePath
+
+
 def startProcess():
 
     all_data = []
@@ -28,36 +53,22 @@ def startProcess():
     print('Processando Stocks')
 
     for ticker in simbolos:
-
-        with Executor() as executor:
-            r = executor.submit(generateData, ticker)
-            result = r.result()
-            #print(result)
+        try:
+            with Executor() as executor:
+                r = executor.submit(generateData, ticker)
+                result = r.result()
             if result:
                 if result.get('Ebit (Lajir)', 0) < 0:
                     negative_ebit_data.append(result)
                 else:
                     all_data.append(result)
+        except Exception as e:
+            print(f'Erro ao processar {ticker}: {e}')
+            partial_path = save_spreadsheet(all_data, negative_ebit_data, suffix='_partial_apos_erro')
+            print(f'Planilha parcial salva em: {partial_path}')
+            continue
 
-    df = pd.DataFrame(all_data)
-    df = df.sort_values(by='MagicIndex', ascending=False, ignore_index=True)
-
-    df_negative_ebit = pd.DataFrame(negative_ebit_data)
-    if not df_negative_ebit.empty:
-        df_negative_ebit = df_negative_ebit.sort_values(by='Ebit (Lajir)', ascending=True, ignore_index=True)
-
-    if not os.path.exists("output"):
-        os.makedirs('output')
-        
-    output = os.path.join(os.getcwd(), 'output/')
-    fileName = f'magicFormula_{datetime.datetime.now().strftime("%d%m%Y-%H%M%S")}.xlsx'
-    filePath = os.path.join(output, fileName)
-    
-    # Create Excel writer object
-    with pd.ExcelWriter(filePath, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name='Empresas Positivas', index=False)
-        if not df_negative_ebit.empty:
-            df_negative_ebit.to_excel(writer, sheet_name='Empresas EBIT Negativo', index=False)
+    save_spreadsheet(all_data, negative_ebit_data)
 
 
 def generateData(simbol):

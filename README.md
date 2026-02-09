@@ -92,6 +92,10 @@ Para facilitar comparar empresas por porte, foi inserida a coluna CapType que pe
 
 Lembrando que no Brasil não há empresas no momento no perfil Mega Caps
 
+### Documentação técnica
+
+Para detalhes sobre funções, fórmulas, fluxo de dados e tratamento de erros, veja **[DOCUMENTATION.md](DOCUMENTATION.md)**.
+
 Bons Investimentos!!!
 
 
